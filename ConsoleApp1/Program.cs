@@ -5,18 +5,16 @@ using Unosquare.RaspberryIO;
 using Unosquare.RaspberryIO.Abstractions;
 using Unosquare.WiringPi;
 
-namespace ConsoleApp1
+namespace RaspiPort
 {
     internal class Program
     {
         private static readonly TaskCompletionSource<byte> ShutdownResetEvent = new TaskCompletionSource<byte>();
 
-
         private static readonly byte[] numbers = {0x3f, 0x06, 0x5b, 0x4f, 0x66,
                             0x6d, 0x7d, 0x07, 0x7f, 0x6f};
 
-
-          static async Task<int> Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
             bool mode = false;
 
@@ -25,7 +23,6 @@ namespace ConsoleApp1
             var Exit = false;
             _ = Task.Factory.StartNew(() =>
               {
-
                   var clkPin = Pi.Gpio[BcmPin.Gpio23];//引用16接口
                   var dataPin = Pi.Gpio[BcmPin.Gpio24];//引用18接口
                   clkPin.PinMode = GpioPinDriveMode.Output;//设置16接口模式为输出
@@ -147,10 +144,13 @@ namespace ConsoleApp1
                           else Show(0xC2, 0x40);
                           if (Date.Length > 2)
                           {
-                              if (ShowCount) {
+                              if (ShowCount)
+                              {
                                   ShowCount = false;
-                                  Show(0xC1, (byte)(numbers[Date[Date.Length - 3] - 48] | 0x80)); 
-                              } else {
+                                  Show(0xC1, (byte)(numbers[Date[Date.Length - 3] - 48] | 0x80));
+                              }
+                              else
+                              {
                                   ShowCount = true;
 
                                   Show(0xC1, numbers[Date[Date.Length - 3] - 48]);
@@ -194,7 +194,6 @@ namespace ConsoleApp1
                           }
                           Thread.Sleep(100);
                       }
-
                   }
               });
             _ = Task.Factory.StartNew(() =>
@@ -211,7 +210,6 @@ namespace ConsoleApp1
                     if (!Shock.Read() && !KeepWatch.IsRunning)//按下按钮，计时未开始
                     {
                         KeepWatch.Restart();
-
                     }
                     else if (Shock.Read() && KeepWatch.IsRunning)//松开按钮，计时开始中，松开按钮计时
                     {
@@ -237,27 +235,27 @@ namespace ConsoleApp1
                         StartWatch.Restart();
                         KeyCount++;
                     }
-                   
-                    
-                    if (KeyCount!=0 && StartWatch.ElapsedMilliseconds > 500)
+
+                    if (KeyCount != 0 && StartWatch.ElapsedMilliseconds > 500)
                     {
                         switch (KeyCount)
                         {
                             case 1:
                                 {
-                                    if (Count > 0&&!mode) Interlocked.Decrement(ref Count);
+                                    if (Count > 0 && !mode) Interlocked.Decrement(ref Count);
                                 }
                                 break;
+
                             case 2:
                                 {
                                     if (!mode) Interlocked.Increment(ref Count);
-
                                 }
                                 break;
+
                             default:
                                 {
-                                    if(KeyCount>6)
-                                    mode = mode ? false : true;
+                                    if (KeyCount > 6)
+                                        mode = mode ? false : true;
                                 }
                                 break;
                         }
@@ -271,7 +269,7 @@ namespace ConsoleApp1
                      }
                      else if (Shock.Read() && KeepWatch.IsRunning)
                      {
-                         if(KeepWatch.ElapsedMilliseconds < 1000&& Count > 0&& !mode) 
+                         if(KeepWatch.ElapsedMilliseconds < 1000&& Count > 0&& !mode)
                              Interlocked.Decrement(ref Count);
                          KeepWatch.Stop();
                      }
@@ -296,15 +294,12 @@ namespace ConsoleApp1
                         KeySign = true;
                         if(Count>0)
                         Interlocked.Decrement(ref Count);
-
                     }
                     if (Shock.Read() && KeySign)
                     {
                         KeySign = false;
                     }*/
-
                 }
-
             });
             _ = Task.Factory.StartNew(() =>
             {
@@ -317,39 +312,33 @@ namespace ConsoleApp1
                 {
                     Thread.Sleep(50);
 
+                    /*  if (Tilt.Read() && !KeySign)
+                       {
+                           KeySign = true;
+                           if (!KeepWatch.IsRunning)
+                               Interlocked.Increment(ref Count);
+                           KeepWatch.Restart();
+                       }else if (!Tilt.Read() && KeySign)
+                       {
+                           KeySign = false;
+                       }
+                       if (KeepWatch.ElapsedMilliseconds > 4000) KeepWatch.Stop();*/
 
-                   /*  if (Tilt.Read() && !KeySign)
-                      {
-                          KeySign = true;
-                          if (!KeepWatch.IsRunning)
-                              Interlocked.Increment(ref Count);
-                          KeepWatch.Restart();
-                      }else if (!Tilt.Read() && KeySign)
-                      {
-                          KeySign = false;
-
-                      }
-                      if (KeepWatch.ElapsedMilliseconds > 4000) KeepWatch.Stop();*/
-
-                      if (!Tilt.Read() && !KeySign)
-                      {
-
-                          KeySign = true;
-                          if(!KeepWatch.IsRunning)
-                          Interlocked.Increment(ref Count);
-                          KeepWatch.Restart();
-
-                      }
-                      else if (Tilt.Read() && KeySign)
-                      {
-                          KeySign = false;
-
-                      }
-                      if (KeepWatch.ElapsedMilliseconds > 4000) KeepWatch.Stop();
+                    if (!Tilt.Read() && !KeySign)
+                    {
+                        KeySign = true;
+                        if (!KeepWatch.IsRunning)
+                            Interlocked.Increment(ref Count);
+                        KeepWatch.Restart();
+                    }
+                    else if (Tilt.Read() && KeySign)
+                    {
+                        KeySign = false;
+                    }
+                    if (KeepWatch.ElapsedMilliseconds > 4000) KeepWatch.Stop();
                 }
             });
             return await ShutdownResetEvent.Task.ConfigureAwait(false);
-
         }
     }
 }
